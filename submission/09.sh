@@ -78,7 +78,7 @@ echo "Number of outputs: $NUM_OUTPUTS"
 one_btc="100000000"
 
 # value in BTC
-value_btc=$(bitcoin-cli decoderawtransaction $BASE_TX | jq -r ".vout[0] | .value")
+value_btc=$(bitcoin-cli  -regtest -rpcwallet=btrustwallet decoderawtransaction $BASE_TX | jq -r ".vout[0] | .value")
 
 # value in sat
 result=$(echo "$value_btc * $one_btc" | bc)
