@@ -2,7 +2,7 @@
 # Add funds to the address.
 # Return only the Address
 
-segwitaddress=$(bitcoin-cli -regtest -rpcwallet=btrustwallet getnewaddress "p2sh-segwit")
+segwitaddress=$(bitcoin-cli -regtest -rpcwallet=btrustwallet getnewaddress)
 
 bitcoin-cli -regtest generatetoaddress 101 $segwitaddress
 echo $segwitaddress
