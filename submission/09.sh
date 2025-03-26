@@ -191,7 +191,7 @@ CHANGE_ADDRESS="bcrt1qg09ftw43jvlhj4wlwwhkxccjzmda3kdm4y83ht"
 # id of transaction
 utxo_txid="23c19f37d4e92e9a115aab86e4edc1b92a51add4e0ed0034bb166314dde50e16"
 utxo_vout=0
-TX_INPUTS='''[{"txid":"'$utxo_txid'", "vout":'$utxo_vout', "sequence":1}]'''
+TX_INPUTS='[{"txid":"'$utxo_txid'", "vout":'$utxo_vout', "sequence":1}]'
 check_cmd "Input JSON creation" "TX_INPUTS" "$TX_INPUTS"
 
 # Verify RBF is enabled in the input structure
@@ -224,11 +224,11 @@ change=$(echo "scale=10; $change_sats / 100000000" | bc)
 CHANGE_BTC=$(printf "%.8f" "$change")
 
 # STUDENT TASK: Create the outputs JSON structure
-TX_OUTPUTS='''{"'$PAYMENT_ADDRESS'":'$PAYMENT_BTC', "'$CHANGE_ADDRESS'":'$CHANGE_BTC'}'''
+TX_OUTPUTS='{"'$PAYMENT_ADDRESS'":'$PAYMENT_BTC', "'$CHANGE_ADDRESS'":'$CHANGE_BTC'}'
 check_cmd "Output JSON creation" "TX_OUTPUTS" "$TX_OUTPUTS"
 
 # STUDENT TASK: Create the raw transaction
-RAW_TX=$(bitcoin-cli -named -regtest -rpcwallet=btrustwallet  createrawtransaction inputs='''[{"txid":"'$utxo_txid'", "vout":'$utxo_vout', "sequence":1}]''' outputs='''{"'$PAYMENT_ADDRESS'":'$PAYMENT_BTC', "'$CHANGE_ADDRESS'":'$CHANGE_BTC'}''')
+RAW_TX=$(bitcoin-cli -named -regtest -rpcwallet=btrustwallet  createrawtransaction inputs="$TX_INPUTS" outputs="$TX_OUTPUTS")
 check_cmd "Raw transaction creation" "RAW_TX" "$RAW_TX"
 
 echo "Successfully created raw transaction!"
