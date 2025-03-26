@@ -210,8 +210,8 @@ check_cmd "Change calculation" "CHANGE_AMOUNT" "$CHANGE_AMOUNT"
 
 payment=$(echo "scale=10; 15000000 / 100000000" | bc)
 
-# add zero before
-PAYMENT_BTC=$(printf "0%s\n" "$payment")
+# format to 8 decimal points
+PAYMENT_BTC=$(printf "%.8f" "$payment")
 
 
 # change in sats
@@ -219,8 +219,9 @@ change_sats=$(echo "15000000 - 1400" | bc)
 
 change=$(echo "scale=10; $change_sats / 100000000" | bc)
 
-# Add zero
-CHANGE_BTC=$(printf "0%s\n" "$change")
+
+# format to 8 decimal points
+CHANGE_BTC=$(printf "%.8f" "$change")
 
 # STUDENT TASK: Create the outputs JSON structure
 TX_OUTPUTS='''{"'$PAYMENT_ADDRESS'":'$PAYMENT_BTC', "'$CHANGE_ADDRESS'":'$CHANGE_BTC'}'''
@@ -245,18 +246,29 @@ echo ""
 
 # STUDENT TASK: Decode the raw transaction
 # WRITE YOUR SOLUTION BELOW:
-DECODED_TX=
+DECODED_TX=$(bitcoin-cli  -regtest -rpcwallet=btrustwallet decoderawtransaction $RAW_TX)
 check_cmd "Transaction decoding" "DECODED_TX" "$DECODED_TX"
 
 # STUDENT TASK: Extract and verify the key components from the decoded transaction
 # WRITE YOUR SOLUTION BELOW:
-VERIFY_RBF=
+
+# extract sequence number
+sequence_number=$(echo $DECODED_TX | jq -r ".vin[]"| jq -r ".sequence" )
+
+# verify sequence number
+if [[ "$sequence_number" -gt 0 && "$sequence_number" -lt 4294967294 ]]; then
+    VERIFY_RBF="true"
+else
+    VERIFY_RBF="false"
+fi
+
+
 check_cmd "RBF verification" "VERIFY_RBF" "$VERIFY_RBF"
 
-VERIFY_PAYMENT=
+VERIFY_PAYMENT=$(echo $DECODED_TX | jq -r ".vout[0]"| jq -r ".value" )
 check_cmd "Payment verification" "VERIFY_PAYMENT" "$VERIFY_PAYMENT"
 
-VERIFY_CHANGE=
+VERIFY_CHANGE=$(echo $DECODED_TX | jq -r ".vout[1]"| jq -r ".value" )
 check_cmd "Change verification" "VERIFY_CHANGE" "$VERIFY_CHANGE"
 
 echo "Verification Results:"
