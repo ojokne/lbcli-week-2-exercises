@@ -304,7 +304,7 @@ SIMPLE_TX_INPUTS='[{"txid":"'$TXID'","vout":0,"sequence":4294967293}]'
 SIMPLE_TX_OUTPUTS='{"'$TEST_ADDRESS'":0.0001}'
 
 # Create a raw transaction for signing using the SIMPLE_TX_INPUTS and SIMPLE_TX_OUTPUTS
-SIMPLE_RAW_TX=
+SIMPLE_RAW_TX=$(bitcoin-cli -named -regtest -rpcwallet=btrustwallet  createrawtransaction inputs="$SIMPLE_TX_INPUTS" outputs="$SIMPLE_TX_OUTPUTS")
 check_cmd "Simple transaction creation" "SIMPLE_RAW_TX" "$SIMPLE_RAW_TX"
 
 echo "Simple transaction created: ${SIMPLE_RAW_TX:0:64}... (truncated)"
@@ -334,42 +334,46 @@ echo "- Send the funds to: 2MvM2nZjueT9qQJgZh7LBPoudS554B6arQc"
 echo ""
 
 # For the exercise, we'll assume the first transaction's TXID is the one created above in challenge 4 ($RAW_TX)
-PARENT_TXID=
+PARENT_TXID=$(bitcoin-cli  -regtest -rpcwallet=btrustwallet decoderawtransaction $RAW_TX | jq -r ".txid")
 check_cmd "Parent TXID extraction" "PARENT_TXID" "$PARENT_TXID"
 echo "Parent transaction ID: $PARENT_TXID"
 
 # STUDENT TASK: Identify the change output index from the parent transaction
 # WRITE YOUR SOLUTION BELOW:
-CHANGE_OUTPUT_INDEX=
+CHANGE_OUTPUT_INDEX=1
 check_cmd "Change output identification" "CHANGE_OUTPUT_INDEX" "$CHANGE_OUTPUT_INDEX"
 
 # STUDENT TASK: Create the input JSON structure for the child transaction
 # WRITE YOUR SOLUTION BELOW:
-CHILD_INPUTS=
+CHILD_INPUTS='[{"txid":"'$PARENT_TXID'","vout":'$CHANGE_OUTPUT_INDEX'}]'
 check_cmd "Child input creation" "CHILD_INPUTS" "$CHILD_INPUTS"
 
 # STUDENT TASK: Calculate fees, allowing for a high fee to help the parent transaction
-CHILD_TX_SIZE=
+CHILD_TX_SIZE=$(echo "10 + 68 + 31" | bc)
 check_cmd "Child transaction size calculation" "CHILD_TX_SIZE" "$CHILD_TX_SIZE"
 
 CHILD_FEE_RATE=20 # satoshis/vbyte
-CHILD_FEE_SATS=
+CHILD_FEE_SATS=$(echo "$CHILD_TX_SIZE * $CHILD_FEE_RATE" | bc)
 check_cmd "Child fee calculation" "CHILD_FEE_SATS" "$CHILD_FEE_SATS"
 
 # Calculate the amount to send after deducting fee
 CHILD_RECIPIENT="2MvM2nZjueT9qQJgZh7LBPoudS554B6arQc"
-CHILD_SEND_AMOUNT=
+CHILD_SEND_AMOUNT=$(echo "$change_sats - $CHILD_FEE_SATS" | bc )
 check_cmd "Child amount calculation" "CHILD_SEND_AMOUNT" "$CHILD_SEND_AMOUNT"
 
 # Convert to BTC
-CHILD_SEND_BTC=
+child_send=$(echo "$CHILD_SEND_AMOUNT / 100000000" | bc )
+
+# format value
+CHILD_SEND_BTC=$(printf "%.8f" "$child_send")
 
 # STUDENT TASK: Create the outputs JSON structure
-CHILD_OUTPUTS=
+CHILD_OUTPUTS='{"2MvM2nZjueT9qQJgZh7LBPoudS554B6arQc":'$CHILD_SEND_AMOUNT'}'
+
 check_cmd "Child output creation" "CHILD_OUTPUTS" "$CHILD_OUTPUTS"
 
 # STUDENT TASK: Create the raw child transaction
-CHILD_RAW_TX=
+CHILD_RAW_TX=$(bitcoin-cli -named -regtest -rpcwallet=btrustwallet  createrawtransaction inputs="$CHILD_INPUTS" outputs="$CHILD_OUTPUTS")
 check_cmd "Child transaction creation" "CHILD_RAW_TX" "$CHILD_RAW_TX"
 
 echo "Successfully created child transaction with higher fee!"
