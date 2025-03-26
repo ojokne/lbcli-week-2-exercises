@@ -187,7 +187,11 @@ PAYMENT_ADDRESS="2MvLcssW49n9atmksjwg2ZCMsEMsoj3pzUP"
 CHANGE_ADDRESS="bcrt1qg09ftw43jvlhj4wlwwhkxccjzmda3kdm4y83ht"
 
 # STUDENT TASK: Create a proper input JSON for createrawtransaction
-TX_INPUTS=
+
+# id of transaction
+utxo_txid="23c19f37d4e92e9a115aab86e4edc1b92a51add4e0ed0034bb166314dde50e16"
+utxo_vout=0
+TX_INPUTS='''[{"txid":"'$utxo_txid'", "vout":'$utxo_vout', "sequence":1}]'''
 check_cmd "Input JSON creation" "TX_INPUTS" "$TX_INPUTS"
 
 # Verify RBF is enabled in the input structure
@@ -199,19 +203,31 @@ fi
 
 # STUDENT TASK: Calculate the change amount
 PAYMENT_AMOUNT=15000000  # in satoshis
-CHANGE_AMOUNT=
+CHANGE_AMOUNT=$(echo "15000000 - 1400" |bc)
 check_cmd "Change calculation" "CHANGE_AMOUNT" "$CHANGE_AMOUNT"
 
 # Convert amounts to BTC for createrawtransaction
-PAYMENT_BTC=
-CHANGE_BTC=
+
+payment=$(echo "scale=10; 15000000 / 100000000" | bc)
+
+# add zero before
+PAYMENT_BTC=$(printf "0%s\n" "$payment")
+
+
+# change in sats
+change_sats=$(echo "15000000 - 1400" | bc)
+
+change=$(echo "scale=10; $change_sats / 100000000" | bc)
+
+# Add zero
+CHANGE_BTC=$(printf "0%s\n" "$change")
 
 # STUDENT TASK: Create the outputs JSON structure
-TX_OUTPUTS=
+TX_OUTPUTS='''{"'$PAYMENT_ADDRESS'":'$PAYMENT_BTC', "'$CHANGE_ADDRESS'":'$CHANGE_BTC'}'''
 check_cmd "Output JSON creation" "TX_OUTPUTS" "$TX_OUTPUTS"
 
 # STUDENT TASK: Create the raw transaction
-RAW_TX=
+RAW_TX=$(bitcoin-cli -named -regtest -rpcwallet=btrustwallet  createrawtransaction inputs='''[{"txid":"'$utxo_txid'", "vout":'$utxo_vout', "sequence":1}]''' outputs='''{"'$PAYMENT_ADDRESS'":'$PAYMENT_BTC', "'$CHANGE_ADDRESS'":'$CHANGE_BTC'}''')
 check_cmd "Raw transaction creation" "RAW_TX" "$RAW_TX"
 
 echo "Successfully created raw transaction!"
